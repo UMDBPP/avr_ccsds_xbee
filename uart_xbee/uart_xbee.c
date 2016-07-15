@@ -31,6 +31,7 @@
 	#define RX_ISR USART3_RX_vect
 	#define FRAME_BITS UCSZ30
 #elif defined(__AVR_ATtiny4313__) || defined(__AVR_ATtiny2313A__)
+// NOTE: THIS CHIP IS NOT USABLE DUE TO THE LACK OF SUFFICIENT MEMORY!!!
 	// RX = PD0, TX = PD1
 	#define BAUD_H UBRRH
 	#define BAUD_L UBRRL
@@ -66,16 +67,16 @@
 #define BUFFER_SIZE 256
 
 /* unfortunate globals */
-static uint8_t rx_buffer[BUFFER_SIZE];
-static uint8_t rx_pos;
-static uint8_t read_position;
+static uint8_t rx_buffer[BUFFER_SIZE]; // buffer for holding values read in on UART
+static uint8_t rx_pos; // value for iterating through buffer when adding to it
+static uint8_t read_position; // value for iterating through buffer for parsing it
 static uint16_t payload_length;
 
 /* private helper functions */
 static uint16_t get_length(uint8_t *low, uint8_t *high);
 
-
 void init_UART() {
+/* Initialization function for the UART on the XBEE ports */
 	// set baud rate
 	BAUD_H = (uint8_t) (UART_BAUD >> 8);
 	BAUD_L = (uint8_t) UART_BAUD;
@@ -88,19 +89,23 @@ void init_UART() {
 	sei(); // enable global interrupt
 
 	// initialize variables
-	rx_pos = 0; // traverses circular array for write
-	read_position = 0; // for read
+	rx_pos = 0;
+	read_position = 0;
 	payload_length = 0;
 }
 
 void send_message(uint8_t *array, uint8_t size) {
+/* this function will send the contents of the array of given size to the attached
+   XBee, which should broadcast it */
 	for (uint8_t i = 0; i < size; i++) {
-		while (!(BANKA & (1 << TX_CLEAR)));
-		DATA_REG = *(array+i);
+		while (!(BANKA & (1 << TX_CLEAR))); // wait for register to clear
+		DATA_REG = *(array+i); // add next value to the register
 	}
 }
 
 uint16_t get_length(uint8_t *lsb, uint8_t *msb) {
+/* get the length of the data by reconstructing the high bit and low bit. This particular
+   function is dependent on the structure of XBee frames. helper method */
 	return (uint16_t)(((*msb) << 8) | ((*lsb) & (uint8_t)0xFF));
 }
 
@@ -108,19 +113,18 @@ uint16_t get_payload_length() {
 	return payload_length;
 }
 
-/* checks for incoming bytes, returns the XBee frame type */
 uint8_t read_rx() {
-	// start delimeter is 0x7E
+/* checks for incoming bytes, returns the XBee frame type */
 	for (uint8_t i = 0; i < BUFFER_SIZE; i++) {
-		if ((uint8_t)rx_buffer[i] == 0x07) {
+		if ((uint8_t)rx_buffer[i] == 0x7E) { // start delimeter for XBee frames is 0x7E
 			//_delay_ms(10);
 			rx_buffer[i] = 0; // reset, so we don't read it twice
 			// the code with ternary operators instead of modulo is there because avr does not have a division piece in the alu, which makes it slow. However, it is fast with powers of two because it becomes a bitwise and. If the buffer size is not a power of two, use the ternary operator instead.
-			uint8_t *msb = rx_buffer + ((i + 1) % 256);
+			uint8_t *msb = rx_buffer + ((i + 1) % 256); // after start delimeter, the next two bytes are for length and the one after that is for frame type
 			//uint8_t *msb = rx_buffer + (((i + 1) < 256) ? (i + 1) : (i + 1 - 256));
 			uint8_t *lsb = rx_buffer + ((i + 2) % 256);
 			//uint8_t *lsb = rx_buffer + (((i + 2) < 256) ? (i + 2) : (i + 2 - 256));
-			read_position = ((i + 3) % 256);
+			read_position = ((i + 3) % 256); // set the read position to where the data starts
 			//read_position = ((i + 3) < 256) ? (i + 3) : (i + 3 - 256);
 			payload_length = get_length(lsb, msb);
 			return *(rx_buffer + ((i + 4) % 256));
@@ -131,6 +135,7 @@ uint8_t read_rx() {
 }
 
 void cpy_data(uint8_t *array) {
+/* function to copy the contents of a XBee frame to the provided array */
 	for (uint8_t i = 0; i < payload_length; i++) {
 		*(array+i) = rx_buffer[(read_position + i) % 256];
 		//*(array+i) = rx_buffer[((read_position + i) < 256) ? (read_position + i) : (read_position + i - 256)];
@@ -138,13 +143,14 @@ void cpy_data(uint8_t *array) {
 }
 
 ISR(RX_ISR) {
-	cli();
-	rx_buffer[rx_pos] = (uint8_t) DATA_REG;
+/* ISR used for adding newly read values into the buffer */
+	cli(); // disable interrupts
+	rx_buffer[rx_pos] = (uint8_t) DATA_REG; // add read value to the buffer, and then update the buffer location
 	if (rx_pos < 255) { // division is expensive compared to this
 		rx_pos++;
 	}
 	else {
 		rx_pos = 0;
 	}
-	sei();
+	sei(); // enable interrupts
 }

@@ -1,7 +1,7 @@
 #ifndef __xbee__
 #define __xbee__
 
-#include "uart_xbee.h"
+#include "../uart_xbee/uart_xbee.h"
 #include <stddef.h>
 
 /* definitional constants */

@@ -1,8 +1,8 @@
 #ifndef _ccsds_
 #define _ccsds_
 
-#include "stdint.h"
-#include "stdbool.h"
+#include <stdint.h>
+#include <stdbool.h>
 
 #define CCSDS_TIME_SIZE 6
 /**********************************************************************

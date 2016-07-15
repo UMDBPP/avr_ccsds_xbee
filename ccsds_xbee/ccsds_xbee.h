@@ -2,8 +2,8 @@
 #define __ccsds_xbee__
 
 #include <string.h> // needed for memcpy
-#include "CCSDS.h"
-#include "xbee.h"
+#include "../CCSDS/CCSDS.h"
+#include "../xbee/xbee.h"
 #include "add_tlm.h"
 /*
 also includes :
@@ -16,10 +16,10 @@ also includes :
 	stddef.h
 */
 
-// behavioral constants
+/* behavioral constants */
 #define PKT_MAX_LEN 100
 
-// function prototypes
+/* function prototypes */
 void init_XBee(uint16_t address, uint16_t pan_id);
 uint8_t send_tlm_msg(uint16_t send_addr, uint8_t *payload, uint8_t payload_size);
 uint8_t send_cmd_msg(uint16_t send_addr, uint8_t fcn_code, uint8_t *payload, uint8_t payload_size);
