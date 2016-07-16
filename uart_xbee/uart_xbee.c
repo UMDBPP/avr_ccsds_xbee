@@ -15,7 +15,7 @@
 	#define RX_INT_EN RXCIE0
 	#define RX_ISR USART_RX_vect
 	#define FRAME_BITS UCSZ00
-#elif defined(__AVR_ATmega2560__)
+#elif defined(__AVR_ATmega2560__) || defined(__AVR_ATmega640__) || defined(__AVR_ATmega1280__)
 	// usart3
 	// RX = PJ0, TX = PJ1
 	#define BAUD_H UBRR3H
@@ -30,9 +30,8 @@
 	#define RX_INT_EN RXCIE3
 	#define RX_ISR USART3_RX_vect
 	#define FRAME_BITS UCSZ30
-#elif defined(__AVR_ATtiny4313__) || defined(__AVR_ATtiny2313A__)
-// NOTE: THIS CHIP IS NOT USABLE DUE TO THE LACK OF SUFFICIENT MEMORY!!!
-	// RX = PD0, TX = PD1
+#elif defined(__AVR_ATtiny828__)
+	// RX = PC2, TX = PC3
 	#define BAUD_H UBRRH
 	#define BAUD_L UBRRL
 	#define BANKB UCSRB
@@ -43,10 +42,52 @@
 	#define TX_CLEAR UDRE
 	#define DATA_REG UDR
 	#define RX_INT_EN RXCIE
-	#define RX_ISR USART0_RX_vect
+	#define RX_ISR USART_RX_vect
 	#define FRAME_BITS UCSZ0
-#elif defined(__AVR_ATtiny441__) || defined(__AVR_ATtiny841__)
+#elif defined(__AVR_ATtiny841__)
 	// RX = PA4, TX = PA5
+	#define BAUD_H UBRR1H
+	#define BAUD_L UBRR1L
+	#define BANKB UCSR1B
+	#define BANKC UCSR1C
+	#define EN_RX RXEN1
+	#define EN_TX TXEN1
+	#define BANKA UCSR1A
+	#define TX_CLEAR UDRE1
+	#define DATA_REG UDR1
+	#define RX_INT_EN RXCIE1
+	#define RX_ISR USART1_RX_vect
+	#define FRAME_BITS UCSZ10
+#elif defined(__AVR_ATmega88PA__) || defined(__AVR_ATmega168PA__)
+	// RX = PD0, TX = PD1
+	#define BAUD_H UBRR0H
+	#define BAUD_L UBRR0L
+	#define BANKB UCSR0B
+	#define BANKC UCSR0C
+	#define EN_RX RXEN0
+	#define EN_TX TXEN0
+	#define BANKA UCSR0A
+	#define TX_CLEAR UDRE0
+	#define DATA_REG UDR0
+	#define RX_INT_EN RXCIE0
+	#define RX_ISR USART_RX_vect
+	#define FRAME_BITS UCSZ00
+#elif defined(__AVR_ATmega169PA__) || defined(__AVR_ATmega329PA__)
+	// RX = PE0, TX = PE1
+	#define BAUD_H UBRR0H
+	#define BAUD_L UBRR0L
+	#define BANKB UCSR0B
+	#define BANKC UCSR0C
+	#define EN_RX RXEN0
+	#define EN_TX TXEN0
+	#define BANKA UCSR0A
+	#define TX_CLEAR UDRE0
+	#define DATA_REG UDR0
+	#define RX_INT_EN RXCIE0
+	#define RX_ISR USART0_RX_vect
+	#define FRAME_BITS UCSZ00
+#elif defined(__AVR_ATmega324P__) || defined(__AVR_ATmega644P__)
+	// RX = PD2, TX = PD3
 	#define BAUD_H UBRR1H
 	#define BAUD_L UBRR1L
 	#define BANKB UCSR1B
@@ -73,8 +114,13 @@ static uint8_t read_position; // value for iterating through buffer for parsing 
 static uint16_t payload_length;
 
 /* private helper functions */
-static uint16_t get_length(uint8_t *low, uint8_t *high);
+static uint16_t get_length(uint8_t *lsb, uint8_t *msb) {
+/* get the length of the data by reconstructing the high bit and low bit. This particular
+   function is dependent on the structure of XBee frames. helper method */
+	return (uint16_t)(((*msb) << 8) | ((*lsb) & (uint8_t)0xFF));
+}
 
+/* externally visible */
 void init_UART() {
 /* Initialization function for the UART on the XBEE ports */
 	// set baud rate
@@ -101,12 +147,6 @@ void send_message(uint8_t *array, uint8_t size) {
 		while (!(BANKA & (1 << TX_CLEAR))); // wait for register to clear
 		DATA_REG = *(array+i); // add next value to the register
 	}
-}
-
-uint16_t get_length(uint8_t *lsb, uint8_t *msb) {
-/* get the length of the data by reconstructing the high bit and low bit. This particular
-   function is dependent on the structure of XBee frames. helper method */
-	return (uint16_t)(((*msb) << 8) | ((*lsb) & (uint8_t)0xFF));
 }
 
 uint16_t get_payload_length() {
