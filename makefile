@@ -4,8 +4,8 @@ F_CPU=-DF_CPU=16000000
 MMCU=-mmcu=atmega328p
 CFLAGS=-c -I. $(OPTLEVEL) -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums -ffunction-sections -fdata-sections $(F_CPU) $(MMCU)
 
-all: CCSDS.o ccsds_xbee.o uart_xbee.o xbee.o
-	avr-ar rcs libccsdsXbee.a CCSDS.o ccsds_xbee.o uart_xbee.o xbee.o
+all: CCSDS.o ccsds_xbee.o uart_xbee.o xbee.o timekeeper.o
+	avr-ar rcs libccsdsXbee.a CCSDS.o ccsds_xbee.o uart_xbee.o xbee.o timekeeper.o
 
 CCSDS.o: CCSDS/CCSDS.c
 	$(CC) $(CFLAGS) CCSDS/CCSDS.c -o CCSDS.o
@@ -18,6 +18,9 @@ uart_xbee.o: uart_xbee/uart_xbee.c
 
 xbee.o: xbee/xbee.c
 	$(CC) $(CFLAGS) xbee/xbee.c -o xbee.o
+
+timekeeper.o: timekeeper/timekeeper.c
+	$(CC) $(CFLAGS) timekeeper/timekeeper.c -o timekeeper.o
 
 clean:
 	rm *.o

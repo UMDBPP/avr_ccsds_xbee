@@ -107,20 +107,20 @@
 #define UART_BAUD (((F_CPU/16)/BAUD)-1)
 #define BUFFER_SIZE 256
 
-/* unfortunate globals */
+/* Unfortunate Globals */
 static uint8_t rx_buffer[BUFFER_SIZE]; // buffer for holding values read in on UART
 static uint8_t rx_pos; // value for iterating through buffer when adding to it
 static uint8_t read_position; // value for iterating through buffer for parsing it
 static uint16_t payload_length;
 
-/* private helper functions */
+/* Private Helper Functions */
 static uint16_t get_length(uint8_t *lsb, uint8_t *msb) {
 /* get the length of the data by reconstructing the high bit and low bit. This particular
    function is dependent on the structure of XBee frames. helper method */
 	return (uint16_t)(((*msb) << 8) | ((*lsb) & (uint8_t)0xFF));
 }
 
-/* externally visible */
+/* Externally Visible */
 void init_UART() {
 /* Initialization function for the UART on the XBEE ports */
 	// set baud rate
@@ -182,8 +182,11 @@ void cpy_data(uint8_t *array) {
 	}
 }
 
+/* Interrupt Service Routines */
 ISR(RX_ISR) {
 /* ISR used for adding newly read values into the buffer */
+	uint8_t old_SREG = SREG; // store state of status register
+
 	cli(); // disable interrupts
 	rx_buffer[rx_pos] = (uint8_t) DATA_REG; // add read value to the buffer, and then update the buffer location
 	if (rx_pos < 255) { // division is expensive compared to this
@@ -192,5 +195,6 @@ ISR(RX_ISR) {
 	else {
 		rx_pos = 0;
 	}
-	sei(); // enable interrupts
+
+	SREG = old_SREG; // revert state of status register
 }

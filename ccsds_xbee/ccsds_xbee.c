@@ -1,6 +1,6 @@
 #include "ccsds_xbee.h"
 
-/* unfortunate globals */
+/* Unfortunate Globals */
 static struct data_frame data_packet;
 static struct cmd_frame cmd_packet;
 static uint8_t _packet_data[PKT_MAX_LEN];
@@ -8,8 +8,10 @@ static uint16_t send_ctr;
 static uint16_t rx_ctr;
 //static uint8_t cmd_rej_ctr;
 
-/* packets called: data_packet, cmd_packet */
+/* Packets Called: data_packet, cmd_packet */
 void init_XBee(uint16_t address, uint16_t pan_id) {
+	init_timekeeper(); // start the counter
+
 	send_ctr = 0;
 	rx_ctr = 0;
 	//_cmd_rej_ctr = 0;
@@ -88,8 +90,8 @@ uint8_t send_tlm_msg(uint16_t send_addr, uint8_t *payload, uint8_t payload_size)
 
 	// fill secondary header fields
 	// TODO: Write the functionality to keep time
-	CCSDS_WR_SEC_HDR_SEC(tlm_sec_header, (uint32_t)0);
-	CCSDS_WR_SEC_HDR_SUBSEC(tlm_sec_header, (uint32_t)0);
+	CCSDS_WR_SEC_HDR_SEC(tlm_sec_header, get_ms() / 1000L);
+	CCSDS_WR_SEC_HDR_SUBSEC(tlm_sec_header, get_ms() % 1000L);
 
 	// copy packet data
 	memcpy(packet_data + sizeof(CCSDS_TlmPkt_t), payload, payload_size);

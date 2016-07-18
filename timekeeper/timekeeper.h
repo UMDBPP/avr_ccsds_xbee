@@ -5,7 +5,9 @@
 #include <avr/interrupt.h>
 #include <stdint.h>
 
-// function prototypes
+/* Function Prototypes */
 void init_timekeeper();
+uint32_t get_ms();
+void delay(uint32_t ms); // input time in ms
 
 #endif  // __timekeeper__

@@ -1,6 +1,6 @@
 #include "xbee.h"
 
-/* private helper method */
+/* Private Helper Functions */
 static void add_checksum(uint8_t *array, uint8_t size) {
 /* The checksum as defined by Digi is to add all of the byte values in
    the data field of the frame, take the lowest 8 bits, and subtract that
@@ -14,7 +14,8 @@ static void add_checksum(uint8_t *array, uint8_t size) {
 	*(array+(size-1)) = (0xFF - (uint8_t)value); // add checksum to the appropriate place in array
 }
 
-/* For data_frame type (to send data to other XBee's) */
+/* Externally Visible */
+/* For Data_Frame Type (to send data to other XBee's) */
 void data_add_target(struct data_frame *packet, uint16_t target) {
 /* put the 16 bit integer target into it's respective high and low byte fields */
 	packet -> dest_lsb = (uint8_t)((uint8_t)0xFF & target);
@@ -55,7 +56,7 @@ void data_send_frame(struct data_frame *packet, uint8_t *data_arr, uint8_t size)
 	send_message(array, sizeof(array)); // send message as defined in uart_xbee
 }
 
-/* for command frame (sets values on XBee itself) */
+/* For Command Frame (sets values on XBee itself) */
 void cmd_add_frame_id(struct cmd_frame *packet, uint8_t id) {
 	packet -> frame_id = id;
 }

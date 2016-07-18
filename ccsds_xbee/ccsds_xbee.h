@@ -16,10 +16,10 @@ also includes :
 	stddef.h
 */
 
-/* behavioral constants */
+/* Behavioral Constants */
 #define PKT_MAX_LEN 100
 
-/* function prototypes */
+/* Function Prototypes */
 void init_XBee(uint16_t address, uint16_t pan_id);
 uint8_t send_tlm_msg(uint16_t send_addr, uint8_t *payload, uint8_t payload_size);
 uint8_t send_cmd_msg(uint16_t send_addr, uint8_t fcn_code, uint8_t *payload, uint8_t payload_size);

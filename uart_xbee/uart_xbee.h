@@ -3,7 +3,7 @@
 
 #include "../timekeeper/timekeeper.h" // gives avr/io.h, avr/interrupt.h, stdint.h
 
-/* function prototypes */
+/* Function Prototypes */
 void init_UART();
 void send_message(uint8_t *array, uint8_t size);
 uint8_t read_rx();
