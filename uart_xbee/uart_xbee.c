@@ -123,6 +123,8 @@ static uint16_t get_length(uint8_t *lsb, uint8_t *msb) {
 /* Externally Visible */
 void init_UART() {
 /* Initialization function for the UART on the XBEE ports */
+	init_timekeeper(); // starts the clock and enables global interrupts
+
 	// set baud rate
 	BAUD_H = (uint8_t) (UART_BAUD >> 8);
 	BAUD_L = (uint8_t) UART_BAUD;
@@ -132,7 +134,6 @@ void init_UART() {
 	BANKC = (3 << FRAME_BITS);
 
 	BANKB |= (1 << RX_INT_EN); // enable RX interrupt
-	sei(); // enable global interrupt
 
 	// initialize variables
 	rx_pos = 0;

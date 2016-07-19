@@ -9,5 +9,6 @@
 void init_timekeeper();
 uint32_t get_ms();
 void delay(uint32_t ms); // input time in ms
+void reset_timekeeper();
 
 #endif  // __timekeeper__

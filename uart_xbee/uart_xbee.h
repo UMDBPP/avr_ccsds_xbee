@@ -1,7 +1,13 @@
 #ifndef __uart_xbee__
 #define __uart_xbee__
 
-#include "../timekeeper/timekeeper.h" // gives avr/io.h, avr/interrupt.h, stdint.h
+#include "../timekeeper/timekeeper.h"
+/*
+also includes :
+	avr/io.h
+	avr/interrupt.h
+	stdint.h
+*/
 
 /* Function Prototypes */
 void init_UART();
