@@ -44,7 +44,7 @@
 	#define PRESCALER_BANK TCCR0A
 	#define CS_BIT0 CS00
 	#define CS_BIT1 CS01
-#elif defined(__AVR_ATmega324P__) || defined(__AVR_ATmega644PA__)
+#elif defined(__AVR_ATmega324P__) || defined(__AVR_ATmega644P__)
 	#define TC0_OVERFLOW_VECT TIMER0_OVF_vect
 	#define TC0_INT_REG TIMSK0
 	#define TC0_INT_EN TOIE0
