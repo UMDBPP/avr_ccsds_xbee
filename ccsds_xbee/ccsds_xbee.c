@@ -76,22 +76,22 @@ uint8_t send_tlm_msg(uint16_t send_addr, uint8_t *payload, uint8_t payload_size)
 	// create buffer large enough for data and other ccsds packet stuff
 	uint8_t packet_data[payload_size + sizeof(CCSDS_TlmPkt_t)];
 
-	CCSDS_PriHdr_t pri_header = *(CCSDS_PriHdr_t*) packet_data;
-	CCSDS_TlmSecHdr_t tlm_sec_header = *(CCSDS_TlmSecHdr_t*) (packet_data+sizeof(CCSDS_PriHdr_t));
+	CCSDS_PriHdr_t* pri_header = (CCSDS_PriHdr_t*) packet_data;
+	CCSDS_TlmSecHdr_t* tlm_sec_header = (CCSDS_TlmSecHdr_t*) (packet_data+sizeof(CCSDS_PriHdr_t));
 
 	// fill primary header fields
-	CCSDS_WR_APID(pri_header,send_addr);
-	CCSDS_WR_SHDR(pri_header,1);
-	CCSDS_WR_TYPE(pri_header,0);
-	CCSDS_WR_VERS(pri_header,0);
-	CCSDS_WR_SEQ(pri_header, send_ctr);
-	CCSDS_WR_SEQFLG(pri_header,0x03);
-	CCSDS_WR_LEN(pri_header,payload_size+sizeof(CCSDS_TlmPkt_t));
+	CCSDS_WR_APID((*pri_header),send_addr);
+	CCSDS_WR_SHDR((*pri_header),1);
+	CCSDS_WR_TYPE((*pri_header),0);
+	CCSDS_WR_VERS((*pri_header),0);
+	CCSDS_WR_SEQ((*pri_header), send_ctr);
+	CCSDS_WR_SEQFLG((*pri_header),0x03);
+	CCSDS_WR_LEN((*pri_header),payload_size+sizeof(CCSDS_TlmPkt_t));
 
 	// fill secondary header fields
 	// TODO: Write the functionality to keep time
-	CCSDS_WR_SEC_HDR_SEC(tlm_sec_header, get_ms() / 1000L);
-	CCSDS_WR_SEC_HDR_SUBSEC(tlm_sec_header, get_ms() % 1000L);
+	CCSDS_WR_SEC_HDR_SEC((*tlm_sec_header), get_ms() / 1000L);
+	CCSDS_WR_SEC_HDR_SUBSEC((*tlm_sec_header), get_ms() % 1000L);
 
 	// copy packet data
 	memcpy(packet_data + sizeof(CCSDS_TlmPkt_t), payload, payload_size);
@@ -120,21 +120,21 @@ uint8_t send_cmd_msg(uint16_t send_addr, uint8_t fcn_code, uint8_t *payload, uin
 	uint8_t packet_data[payload_size + sizeof(CCSDS_CmdPkt_t)];
 
 	// cast the buffer into the header structures so that the fields can be filled
-	CCSDS_PriHdr_t pri_header = *(CCSDS_PriHdr_t*) packet_data;
-	CCSDS_CmdSecHdr_t cmd_sec_header = *(CCSDS_CmdSecHdr_t*) (packet_data+sizeof(CCSDS_PriHdr_t));
+	CCSDS_PriHdr_t* pri_header = (CCSDS_PriHdr_t*) packet_data;
+	CCSDS_CmdSecHdr_t* cmd_sec_header = (CCSDS_CmdSecHdr_t*) (packet_data+sizeof(CCSDS_PriHdr_t));
 
 	// fill primary header fields
-	CCSDS_WR_APID(pri_header,send_addr);
-	CCSDS_WR_SHDR(pri_header,1);
-	CCSDS_WR_TYPE(pri_header,1);
-	CCSDS_WR_VERS(pri_header,0);
-	CCSDS_WR_SEQ(pri_header, send_ctr);
-	CCSDS_WR_SEQFLG(pri_header,0x03); 
-	CCSDS_WR_LEN(pri_header,payload_size+sizeof(CCSDS_CmdPkt_t));
+	CCSDS_WR_APID((*pri_header),send_addr);
+	CCSDS_WR_SHDR((*pri_header),1);
+	CCSDS_WR_TYPE((*pri_header),1);
+	CCSDS_WR_VERS((*pri_header),0);
+	CCSDS_WR_SEQ((*pri_header), send_ctr);
+	CCSDS_WR_SEQFLG((*pri_header),0x03); 
+	CCSDS_WR_LEN((*pri_header),payload_size+sizeof(CCSDS_CmdPkt_t));
 
 	// fill secondary header fields
-	CCSDS_WR_CHECKSUM(cmd_sec_header, 0x0);
-	CCSDS_WR_FC(cmd_sec_header, fcn_code);
+	CCSDS_WR_CHECKSUM((*cmd_sec_header), 0x0);
+	CCSDS_WR_FC((*cmd_sec_header), fcn_code);
 
 	// write the checksum after the header's been added
 	CCSDS_WR_CHECKSUM((*(CCSDS_CmdPkt_t*) packet_data).SecHdr, CCSDS_ComputeCheckSum((CCSDS_CmdPkt_t*) packet_data));
@@ -172,7 +172,7 @@ uint8_t read_msg(uint16_t timeout) {
 	return -1; // did not read anything
 }
 
-uint8_t read_tlm_msg(uint8_t *data) {
+/*uint8_t read_tlm_msg(uint8_t *data) {
 	CCSDS_PriHdr_t pri_header;
 	pri_header = *(CCSDS_PriHdr_t*)(_packet_data);
 	if (!CCSDS_RD_SHDR(pri_header)) {
@@ -183,6 +183,22 @@ uint8_t read_tlm_msg(uint8_t *data) {
 		memcpy(data, _packet_data + sizeof(CCSDS_TlmPkt_t), (get_payload_length() - sizeof(CCSDS_TlmPkt_t)));
 		// return data length
 		return (CCSDS_RD_LEN(pri_header) - sizeof(CCSDS_TlmPkt_t));
+	}
+
+	return -1; // error
+} */
+
+uint8_t read_tlm_msg(uint8_t *data) {
+	CCSDS_PriHdr_t* pri_header;
+	pri_header = (CCSDS_PriHdr_t*)(_packet_data);
+	if (!CCSDS_RD_SHDR((*pri_header))) {
+		//CCSDS_TlmSecHdr_t* tlm_sec_header;
+		//tlm_sec_header = (CCSDS_TlmSecHdr_t*) (_packet_data + sizeof(CCSDS_PriHdr_t));
+
+		// copy data into user's array
+		memcpy(data, _packet_data + sizeof(CCSDS_TlmPkt_t), (get_payload_length() - sizeof(CCSDS_TlmPkt_t)));
+		// return data length
+		return (CCSDS_RD_LEN((*pri_header)) - sizeof(CCSDS_TlmPkt_t));
 	}
 
 	return -1; // error
