@@ -58,7 +58,7 @@
 #define MS_INC (uS_PER_OVERFLOW/1000)
 #define MS_FRAC_INC (((uS_PER_OVERFLOW) % 1000) >> 3)
 
-/* Unfortunate Globals */
+/* Globals */
 static volatile uint32_t overflow_ctr; // represents ms
 static volatile uint8_t overflow_ctr_frac;
 
@@ -78,7 +78,7 @@ uint32_t get_ms() {
 	uint8_t old_SREG = SREG;
 	cli();
 
-	uint32_t local_ms = overflow_ctr; // 4 byte variable takes 5 instructions to return, so chance of interrupt firing - ergo local copy.
+	uint32_t local_ms = overflow_ctr;
 
 	SREG = old_SREG;
 	return local_ms;
@@ -99,7 +99,7 @@ void reset_timekeeper() {
 	SREG = old_SREG;
 }
 
-ISR(TC0_OVERFLOW_VECT) {
+ISR(TC0_OVERFLOW_VECT) { // interrupt service routine for tracking time
 	overflow_ctr += MS_INC;
 	overflow_ctr_frac += MS_FRAC_INC;
 	if (overflow_ctr_frac >= 125) {

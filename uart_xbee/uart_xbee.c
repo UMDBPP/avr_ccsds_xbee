@@ -106,8 +106,9 @@
 #define BAUD 9600
 #define UART_BAUD (((F_CPU/16)/BAUD)-1)
 #define BUFFER_SIZE 256
+// keep buffer size power of 2, or there will be perfomance hit since there is no division in ALU
 
-/* Unfortunate Globals */
+/* Globals */
 static uint8_t rx_buffer[BUFFER_SIZE]; // buffer for holding values read in on UART
 static uint8_t rx_pos; // value for iterating through buffer when adding to it
 static uint8_t read_position; // value for iterating through buffer for parsing it
@@ -160,16 +161,13 @@ uint8_t read_rx() {
 		if ((uint8_t)rx_buffer[i] == 0x7E) { // start delimeter for XBee frames is 0x7E
 			//_delay_ms(10);
 			rx_buffer[i] = 0; // reset, so we don't read it twice
-			// the code with ternary operators instead of modulo is there because avr does not have a division piece in the alu, which makes it slow. However, it is fast with powers of two because it becomes a bitwise and. If the buffer size is not a power of two, use the ternary operator instead.
-			uint8_t *msb = rx_buffer + ((i + 1) % 256); // after start delimeter, the next two bytes are for length and the one after that is for frame type
-			//uint8_t *msb = rx_buffer + (((i + 1) < 256) ? (i + 1) : (i + 1 - 256));
-			uint8_t *lsb = rx_buffer + ((i + 2) % 256);
-			//uint8_t *lsb = rx_buffer + (((i + 2) < 256) ? (i + 2) : (i + 2 - 256));
-			read_position = ((i + 3) % 256); // set the read position to where the data starts
-			//read_position = ((i + 3) < 256) ? (i + 3) : (i + 3 - 256);
+
+			uint8_t *msb = rx_buffer + ((i + 1) % BUFFER_SIZE); // after start delimeter, the next two bytes are for length and the one after that is for frame type
+			uint8_t *lsb = rx_buffer + ((i + 2) % BUFFER_SIZE);
+			read_position = ((i + 3) % BUFFER_SIZE); // set the read position to where the data starts
+
 			payload_length = get_length(lsb, msb);
-			return *(rx_buffer + ((i + 4) % 256));
-			//return = *(rx_buffer + (((i + 4) < 256) ? (i + 4) : (i + 4 - 256)));
+			return *(rx_buffer + ((i + 4) % BUFFER_SIZE));
 		}
 	}
 	return 0;
@@ -178,8 +176,7 @@ uint8_t read_rx() {
 void cpy_data(uint8_t *array) {
 /* function to copy the contents of a XBee frame to the provided array */
 	for (uint8_t i = 0; i < payload_length; i++) {
-		*(array+i) = rx_buffer[(read_position + i) % 256];
-		//*(array+i) = rx_buffer[((read_position + i) < 256) ? (read_position + i) : (read_position + i - 256)];
+		*(array+i) = rx_buffer[(read_position + i) % BUFFER_SIZE];
 	}
 }
 
@@ -190,11 +187,11 @@ ISR(RX_ISR) {
 
 	cli(); // disable interrupts
 	rx_buffer[rx_pos] = (uint8_t) DATA_REG; // add read value to the buffer, and then update the buffer location
-	if (rx_pos < 255) { // division is expensive compared to this
-		rx_pos++;
+	if (rx_pos >= BUFFER_SIZE) {
+		rx_pos = 0;
 	}
 	else {
-		rx_pos = 0;
+		rx_pos++;
 	}
 
 	SREG = old_SREG; // revert state of status register

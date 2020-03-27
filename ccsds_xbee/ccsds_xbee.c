@@ -1,6 +1,6 @@
 #include "ccsds_xbee.h"
 
-/* Unfortunate Globals */
+/* Globals */
 static struct data_frame data_packet;
 static struct cmd_frame cmd_packet;
 static uint8_t _packet_data[PKT_MAX_LEN];
@@ -35,7 +35,7 @@ void init_XBee(uint16_t address, uint16_t pan_id) {
 	// PL command to set xbee power level to max
 	uint8_t pl_params[] = {0x04};
 
-	// send  MY command
+	// send  MY command to set xbee addr
 	cmd_send_frame(&cmd_packet, (uint8_t)'M', (uint8_t)'Y', my_params, (uint8_t)sizeof(my_params));
 	// AC command to apply changes
 	cmd_send_frame(&cmd_packet, (uint8_t)'A', (uint8_t)'C', NULL, 0);
@@ -89,7 +89,6 @@ uint8_t send_tlm_msg(uint16_t send_addr, uint8_t *payload, uint8_t payload_size)
 	CCSDS_WR_LEN((*pri_header),payload_size+sizeof(CCSDS_TlmPkt_t));
 
 	// fill secondary header fields
-	// TODO: Write the functionality to keep time
 	CCSDS_WR_SEC_HDR_SEC((*tlm_sec_header), get_ms() / 1000L);
 	CCSDS_WR_SEC_HDR_SUBSEC((*tlm_sec_header), get_ms() % 1000L);
 
@@ -107,7 +106,7 @@ uint8_t send_tlm_msg(uint16_t send_addr, uint8_t *payload, uint8_t payload_size)
 	send_ctr++;
 
 	//return success
-	return 1; // This should be return 0, but consistency with the Arduino setup
+	return 1; // Success returns 1 not 0 for consistency with the Arduino
 }
 
 uint8_t send_cmd_msg(uint16_t send_addr, uint8_t fcn_code, uint8_t *payload, uint8_t payload_size) {
@@ -153,7 +152,7 @@ uint8_t send_cmd_msg(uint16_t send_addr, uint8_t fcn_code, uint8_t *payload, uin
 	send_ctr++;
 
 	// return success
-	return 1; // eventually change to 0
+	return 1;
 }
 
 uint8_t read_msg(uint16_t timeout) {
@@ -172,29 +171,10 @@ uint8_t read_msg(uint16_t timeout) {
 	return -1; // did not read anything
 }
 
-/*uint8_t read_tlm_msg(uint8_t *data) {
-	CCSDS_PriHdr_t pri_header;
-	pri_header = *(CCSDS_PriHdr_t*)(_packet_data);
-	if (!CCSDS_RD_SHDR(pri_header)) {
-		CCSDS_TlmSecHdr_t tlm_sec_header;
-		tlm_sec_header = *(CCSDS_TlmSecHdr_t*) (_packet_data + sizeof(CCSDS_PriHdr_t));
-
-		// copy data into user's array
-		memcpy(data, _packet_data + sizeof(CCSDS_TlmPkt_t), (get_payload_length() - sizeof(CCSDS_TlmPkt_t)));
-		// return data length
-		return (CCSDS_RD_LEN(pri_header) - sizeof(CCSDS_TlmPkt_t));
-	}
-
-	return -1; // error
-} */
-
 uint8_t read_tlm_msg(uint8_t *data) {
 	CCSDS_PriHdr_t* pri_header;
 	pri_header = (CCSDS_PriHdr_t*)(_packet_data);
 	if (!CCSDS_RD_SHDR((*pri_header))) {
-		//CCSDS_TlmSecHdr_t* tlm_sec_header;
-		//tlm_sec_header = (CCSDS_TlmSecHdr_t*) (_packet_data + sizeof(CCSDS_PriHdr_t));
-
 		// copy data into user's array
 		memcpy(data, _packet_data + sizeof(CCSDS_TlmPkt_t), (get_payload_length() - sizeof(CCSDS_TlmPkt_t)));
 		// return data length

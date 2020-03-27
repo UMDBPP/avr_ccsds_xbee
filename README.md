@@ -15,8 +15,3 @@ There is one more file in this directory - add_tlm.h. This file is a utility pie
 
 ## System Requirements
 AVR system with at least 8K of flash and 500 bytes of SRAM. Currently supported chips include ATTINY841, ATTINY828, ATMEGA328P, ATMEGA2560, ATMEGA640, ATMEGA1280, ATMEGA88PA, ATMEGA168PA, ATMEGA169PA, ATMEGA329PA, ATMEGA324P, ATMEGA644P
-
-## Usage
-Clone this repo to the project folder. The only file that needs to be included is the ccsds_xbee.h file located in the ccsds_xbee directory.
-
-TODO: write about what functions are here and how to use them!

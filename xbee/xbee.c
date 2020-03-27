@@ -51,7 +51,7 @@ void data_send_frame(struct data_frame *packet, uint8_t *data_arr, uint8_t size)
 	for (uint8_t c = 0; c < size; c++) {
 		array[i++] = *(data_arr+c);
 	}
-	add_checksum(array, sizeof(array)); // array is made of uint8_t, so no division needed (sizeof(array)/sizeof(array[0]))
+	add_checksum(array, sizeof(array));
 
 	send_message(array, sizeof(array)); // send message as defined in uart_xbee
 }
@@ -66,7 +66,7 @@ void cmd_send_frame(struct cmd_frame *packet, uint8_t cmd_1, uint8_t cmd_2, uint
 	packet -> frame_type = 0x08; // command frame
 	packet -> at_cmd_1 = cmd_1;
 	packet -> at_cmd_2 = cmd_2;
-	packet -> length_lsb = (uint8_t)((uint8_t)0xFF & (4+size)); // +4 becuase extra fields are frame type, frame id, AT Command
+	packet -> length_lsb = (uint8_t)((uint8_t)0xFF & (4+size)); // +4 because extra fields are frame type, frame id, AT Command
 	packet -> length_msb = (uint8_t)(((4+size) >> 8) & (uint8_t)0xFF);
 
 	uint8_t array[sizeof(struct cmd_frame) + size + 1];
@@ -84,7 +84,7 @@ void cmd_send_frame(struct cmd_frame *packet, uint8_t cmd_1, uint8_t cmd_2, uint
 			array[i++] = *(cmd_params+c);
 		}
 	}
-	add_checksum(array, sizeof(array)); // array is made of uint8_t, so no division needed (sizeof(array)/sizeof(array[0]))
+	add_checksum(array, sizeof(array));
 
 	send_message(array, sizeof(array));
 }
